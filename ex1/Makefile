@@ -1,5 +1,5 @@
 # program executable name
-TARGET = testProgram
+TARGET = testing
 
 # compiler flags
 CFLAGS = -g -Wall
@@ -23,8 +23,7 @@ $(TARGET): $(OBJECTS)
 # compile
 %.o : %.c
 	gcc $(CFLAGS) -c -o $@ $<
-# cleaning
 
-.PHONY: clean
+# cleaning
 clean:
 	rm -f $(TARGET) $(OBJECTS)
