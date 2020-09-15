@@ -2,10 +2,10 @@
 TARGET = testing
 
 # compiler flags
-CFLAGS = -g -std=gnu11 -Wall # -fsanitize=address
+CFLAGS = -g -std=gnu11 -Wall -fsanitize=address
 
 # linker flags
-LDFLAGS = -g -std=gnu11 # -fsanitize=address
+LDFLAGS = -g -std=gnu11 -fsanitize=address
 
 # list of sources
 SOURCES = $(shell find -name "*.c")

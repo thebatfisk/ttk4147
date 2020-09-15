@@ -94,21 +94,24 @@ long array_length(Array a)
 
 void array_reserve(Array *a, long capacity)
 {
-    long *newData = malloc(sizeof(long) * (capacity));
-    memcpy(newData, a->data, (sizeof(long) * (capacity / 2)));
+    long *new_data = malloc(sizeof(long) * (capacity));
+    // memcpy(new_data, a->data, sizeof(long) * (capacity - 20));
+    memcpy(new_data, a->data, sizeof(long) * (capacity / 2));
     free(a->data);
-    a->data = newData;
+    a->data = new_data;
     a->capacity = capacity;
+    printf("New address: %p\n", new_data);
 }
 
 // Modifiers
 
-void array_insertBack(Array *a, long stuff)
+void array_insertBack(Array *a, long stuff, float mult)
 {
-    // if (a->back >= a->capacity)
-    // {
-    //     array_reserve(a, ((a->capacity) * 2));
-    // }
+    if (a->back >= a->capacity)
+    {
+        // array_reserve(a, a->capacity + 20);
+        array_reserve(a, a->capacity * mult);
+    }
 
     a->data[a->back] = stuff;
     a->back++;

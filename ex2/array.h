@@ -30,4 +30,4 @@ long array_length(Array a);
 void array_reserve(Array* a, long capacity);
 
 // Modifiers
-void array_insertBack(Array* a, long stuff);
+void array_insertBack(Array* a, long stuff, float mult);
