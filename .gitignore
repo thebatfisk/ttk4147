@@ -12,6 +12,8 @@ build_*
 cscope.*
 .dir
 
+*.DS_Store
+
 /*.patch
 
 tags
