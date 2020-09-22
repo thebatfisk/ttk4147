@@ -5,7 +5,7 @@
 #include <time.h>
 
 #define EATING_TIME 500
-#define NUMBER_OF_EATINGS 10000
+#define NUMBER_OF_EATINGS 1000
 
 struct forks
 {
@@ -17,6 +17,7 @@ struct forks
 };
 
 struct forks forks;
+pthread_mutex_t waiter;
 
 void eating(void)
 {
@@ -28,8 +29,10 @@ void *phil_1(void *arg)
     for (int i = 0; i <= NUMBER_OF_EATINGS; i++)
     {
         printf("Philosopher 1 THINKING\n");
+        pthread_mutex_lock(&waiter);
         pthread_mutex_lock(&forks.five);
         pthread_mutex_lock(&forks.one);
+        pthread_mutex_unlock(&waiter);
         printf("Philosopher 1 EATING\n");
         eating();
         pthread_mutex_unlock(&forks.one);
@@ -44,8 +47,10 @@ void *phil_2(void *arg)
     for (int i = 0; i <= NUMBER_OF_EATINGS; i++)
     {
         printf("Philosopher 2 THINKING\n");
+        pthread_mutex_lock(&waiter);
         pthread_mutex_lock(&forks.one);
         pthread_mutex_lock(&forks.two);
+        pthread_mutex_unlock(&waiter);
         printf("Philosopher 2 EATING\n");
         eating();
         pthread_mutex_unlock(&forks.two);
@@ -60,8 +65,10 @@ void *phil_3(void *arg)
     for (int i = 0; i <= NUMBER_OF_EATINGS; i++)
     {
         printf("Philosopher 3 THINKING\n");
+        pthread_mutex_lock(&waiter);
         pthread_mutex_lock(&forks.two);
         pthread_mutex_lock(&forks.three);
+        pthread_mutex_unlock(&waiter);
         printf("Philosopher 3 EATING\n");
         eating();
         pthread_mutex_unlock(&forks.three);
@@ -76,8 +83,10 @@ void *phil_4(void *arg)
     for (int i = 0; i <= NUMBER_OF_EATINGS; i++)
     {
         printf("Philosopher 4 THINKING\n");
+        pthread_mutex_lock(&waiter);
         pthread_mutex_lock(&forks.three);
         pthread_mutex_lock(&forks.four);
+        pthread_mutex_unlock(&waiter);
         printf("Philosopher 4 EATING\n");
         eating();
         pthread_mutex_unlock(&forks.four);
@@ -92,8 +101,10 @@ void *phil_5(void *arg)
     for (int i = 0; i <= NUMBER_OF_EATINGS; i++)
     {
         printf("Philosopher 5 THINKING\n");
+        pthread_mutex_lock(&waiter);
         pthread_mutex_lock(&forks.four);
         pthread_mutex_lock(&forks.five);
+        pthread_mutex_unlock(&waiter);
         printf("Philosopher 5 EATING\n");
         eating();
         pthread_mutex_unlock(&forks.five);
@@ -116,6 +127,7 @@ int main()
     pthread_mutex_init(&forks.three, NULL);
     pthread_mutex_init(&forks.four, NULL);
     pthread_mutex_init(&forks.five, NULL);
+    pthread_mutex_init(&waiter, NULL);
 
     pthread_create(&phil_1_thread, NULL, &phil_1, NULL);
     pthread_create(&phil_2_thread, NULL, &phil_2, NULL);
@@ -134,4 +146,5 @@ int main()
     pthread_mutex_destroy(&forks.three);
     pthread_mutex_destroy(&forks.four);
     pthread_mutex_destroy(&forks.five);
+    pthread_mutex_destroy(&waiter);
 }

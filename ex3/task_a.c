@@ -8,7 +8,7 @@ void *thread_0_handler(void *arg)
 {
     long local_0 = 0;
 
-    for (int i = 0; i < 50 * 1000 * 1000; i++)
+    for (int i = 0; i < 50 * 1000; i++)
     {
         local_0++;
         global++;
@@ -23,7 +23,7 @@ void *thread_1_handler(void *arg)
 {
     long local_1 = 0;
 
-    for (int i = 0; i < 50 * 1000 * 1000; i++)
+    for (int i = 0; i < 50 * 1000; i++)
     {
         local_1++;
         global++;

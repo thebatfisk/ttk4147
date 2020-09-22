@@ -1,0 +1,1 @@
+More than one thread/core is used. That is why real time is lower that user + system time.
