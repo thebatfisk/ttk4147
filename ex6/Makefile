@@ -1,5 +1,5 @@
 # program executable name
-TARGET = testProgram
+TARGET = ex6_exe
 
 # compiler flags
 CFLAGS = -g -Wall -std=gnu11
