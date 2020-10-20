@@ -39,18 +39,20 @@ void *disturbance_thread(void *arg)
 
 void *thread_unperiodic(void *arg)
 {
-	unsigned long duration = 20000000000; // 20 seconds timeout
+	unsigned long duration = 40000000000; // 40 seconds timeout
 	unsigned long endTime = rt_timer_read() + duration;
 
 	set_cpu(T_CPU(0));
 
+	// rt_printf("TEST\n");
+
 	while (1)
 	{
-		if (io_read(*(int *)arg) == 0)
+		if (io_read((long)arg) == 0)
 		{
-			io_write(*(int *)arg, 0);
+			io_write((long)arg, 0);
 			rt_timer_spin(80000);
-			io_write(*(int *)arg, 1);
+			io_write((long)arg, 1);
 		}
 		if (rt_timer_read() > endTime)
 		{
@@ -67,18 +69,20 @@ void *thread_unperiodic(void *arg)
 
 void *thread_periodic(void *arg)
 {
-	unsigned long duration = 20000000000; // 20 seconds timeout
+	unsigned long duration = 40000000000; // 40 seconds timeout
 	unsigned long endTime = rt_timer_read() + duration;
 
 	set_cpu(T_CPU(0));
 
+	// rt_printf("TEST\n");
+
 	while (1)
 	{
-		if (io_read(*(int *)arg) == 0)
+		if (io_read((long)arg) == 0)
 		{
-			io_write(*(int *)arg, 0);
+			io_write((long)arg, 0);
 			rt_timer_spin(80000);
-			io_write(*(int *)arg, 1);
+			io_write((long)arg, 1);
 		}
 		if (rt_timer_read() > endTime)
 		{
@@ -93,7 +97,7 @@ void *thread_periodic(void *arg)
 
 		rt_task_wait_period(NULL);
 	}
-}
+}	 
 
 int main()
 {
@@ -101,9 +105,29 @@ int main()
 	io_init();
 	rt_print_auto_init(1);
 
-	int io_1 = 1, io_2 = 2, io_3 = 3;
-
 	/* Task A */
+
+	/* rt_task_create(&rt_thread_1, "thread1", 0, 40, T_CPU(0)); */
+	/* rt_task_create(&rt_thread_2, "thread2", 0, 40, T_CPU(0)); */
+	/* rt_task_create(&rt_thread_3, "thread3", 0, 40, T_CPU(0)); */
+
+	/* rt_task_start(&rt_thread_1, &thread_unperiodic, 1); */
+	/* rt_task_start(&rt_thread_2, &thread_unperiodic, 2); */
+	/* rt_task_start(&rt_thread_3, &thread_unperiodic, 3); */
+
+	/* pthread_t disturbance[DISTURB_NUM]; */
+
+	/* for (int i = 0; i < DISTURB_NUM; i++) */
+	/* { */
+	/*         pthread_create(&disturbance[i], NULL, &disturbance_thread, NULL); */
+	/* } */
+
+	/* for (int i = 0; i < DISTURB_NUM; i++) */
+	/* { */
+	/* 	pthread_join(disturbance[i], NULL); */
+	/* } */
+
+	/* Task B */
 
 	rt_task_create(&rt_thread_1, "thread1", 0, 40, T_CPU(0));
 	rt_task_create(&rt_thread_2, "thread2", 0, 40, T_CPU(0));
@@ -113,47 +137,23 @@ int main()
 	rt_task_set_periodic(&rt_thread_2, TM_NOW, (1 * 1000 * 1000));
 	rt_task_set_periodic(&rt_thread_3, TM_NOW, (1 * 1000 * 1000));
 
-	rt_task_start(&rt_thread_1, &thread_unperiodic, &io_1);
-	rt_task_start(&rt_thread_2, &thread_unperiodic, &io_2);
-	rt_task_start(&rt_thread_3, &thread_unperiodic, &io_3);
+	rt_task_start(&rt_thread_1, &thread_periodic, 1);
+	rt_task_start(&rt_thread_2, &thread_periodic, 2);
+	rt_task_start(&rt_thread_3, &thread_periodic, 3);
 
-	// pthread_t disturbance[DISTURB_NUM];
+	pthread_t disturbance[DISTURB_NUM];
 
-	// for (int i = 0; i < DISTURB_NUM; i++)
-	// {
-	// 	pthread_create(&disturbance[i], NULL, &disturbance_thread, NULL);
-	// }
+	for (int i = 0; i < DISTURB_NUM; i++)
+	{
+	 	pthread_create(&disturbance[i], NULL, &disturbance_thread, NULL);
+	}
 
-	// for (int i = 0; i < DISTURB_NUM; i++)
-	// {
-	// 	pthread_join(disturbance[i], NULL);
-	// }
+	for (int i = 0; i < DISTURB_NUM; i++)
+	{
+		pthread_join(disturbance[i], NULL);
+        }
 
-	/* Task B */
-
-	// rt_task_create(&rt_thread_1, "thread1", 0, 40, T_CPU(0));
-	// rt_task_create(&rt_thread_2, "thread2", 0, 40, T_CPU(0));
-	// rt_task_create(&rt_thread_3, "thread3", 0, 40, T_CPU(0));
-
-	// rt_task_set_periodic(&rt_thread_1, TM_NOW, (1 * 1000 * 1000));
-	// rt_task_set_periodic(&rt_thread_2, TM_NOW, (1 * 1000 * 1000));
-	// rt_task_set_periodic(&rt_thread_3, TM_NOW, (1 * 1000 * 1000));
-
-	// rt_task_start(&rt_thread_1, &thread_periodic, &io_1);
-	// rt_task_start(&rt_thread_2, &thread_periodic, &io_2);
-	// rt_task_start(&rt_thread_3, &thread_periodic, &io_3);
-
-	// // pthread_t disturbance[DISTURB_NUM];
-
-	// // for (int i = 0; i < DISTURB_NUM; i++)
-	// // {
-	// // 	pthread_create(&disturbance[i], NULL, &disturbance_thread, NULL);
-	// // }
-
-	// // for (int i = 0; i < DISTURB_NUM; i++)
-	// // {
-	// // 	pthread_join(disturbance[i], NULL);
-	// // }
+	while(1) {}
 
 	return 0;
 }
