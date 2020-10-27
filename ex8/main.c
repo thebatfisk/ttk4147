@@ -9,6 +9,7 @@
 #include <rtdk.h>
 #include <sched.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 RT_SEM sem;
 RT_MUTEX mutex;
@@ -31,8 +32,8 @@ typedef struct thread_priorities
 	int boost;
 } thread_priorities;
 
-struct resource resource_a = {.mutex = &mutexA, .priority = 90};
-struct resource resource_b = {.mutex = &mutexB, .priority = 95};
+struct resource resource_a = {.mutex = &mutex_a, .priority = 90};
+struct resource resource_b = {.mutex = &mutex_b, .priority = 95};
 struct thread_priorities thread_1_info = {.task = &rt_thread_1, .base = 10};
 struct thread_priorities thread_2_info = {.task = &rt_thread_3, .base = 30};
 
@@ -69,21 +70,30 @@ void icpp_unlock(struct resource *resc, struct thread_priorities *task_str)
 
 /* Task A */
 
-void *thread_tsk_a_wait(void *arg)
+void thread_tsk_a_wait_1(void *arg)
 {
 	set_cpu(T_CPU(0));
 
-	rt_printf("Wait thread waiting\n");
+	rt_printf("Wait thread 1 waiting\n");
 	rt_sem_p(&sem, TM_INFINITE);
-	rt_printf("Wait thread continuing\n");
+	rt_printf("Wait thread 1 continuing\n");
 }
 
-void *thread_tsk_a_sync(void *arg)
+void thread_tsk_a_wait_2(void *arg)
+{
+	set_cpu(T_CPU(0));
+
+	rt_printf("Wait thread 2 waiting\n");
+	rt_sem_p(&sem, TM_INFINITE);
+	rt_printf("Wait thread 2 continuing\n");
+}
+
+void thread_tsk_a_sync(void *arg)
 {
 	set_cpu(T_CPU(0));
 
 	rt_printf("Sync thread sleeping\n");
-	rt_task_sleep(100000000);
+	rt_task_sleep(5000000000);
 	rt_printf("Sync thread releasing\n");
 	rt_sem_broadcast(&sem);
 	rt_task_sleep(100000000);
@@ -92,7 +102,7 @@ void *thread_tsk_a_sync(void *arg)
 
 /* Task B */
 
-void *thread_tsk_b_low(void *arg)
+void thread_tsk_b_low(void *arg)
 {
 	set_cpu(T_CPU(0));
 
@@ -104,7 +114,7 @@ void *thread_tsk_b_low(void *arg)
 	rt_sem_v(&sem);
 }
 
-void *thread_tsk_b_medium(void *arg)
+void thread_tsk_b_medium(void *arg)
 {
 	set_cpu(T_CPU(0));
 
@@ -115,7 +125,7 @@ void *thread_tsk_b_medium(void *arg)
 	rt_printf("Medium finished\n");
 }
 
-void *thread_tsk_b_high(void *arg)
+void thread_tsk_b_high(void *arg)
 {
 	set_cpu(T_CPU(0));
 
@@ -127,14 +137,11 @@ void *thread_tsk_b_high(void *arg)
 	busy_wait_us(200000);
 	rt_printf("High releasing semaphore\n");
 	rt_sem_v(&sem);
-
-	rt_task_sleep(1000000000);
-	main_wait = false;
 }
 
 /* Task C */
 
-void *thread_tsk_c_low(void *arg)
+void thread_tsk_c_low(void *arg)
 {
 	set_cpu(T_CPU(0));
 
@@ -146,7 +153,7 @@ void *thread_tsk_c_low(void *arg)
 	rt_mutex_release(&mutex);
 }
 
-void *thread_tsk_c_medium(void *arg)
+void thread_tsk_c_medium(void *arg)
 {
 	set_cpu(T_CPU(0));
 
@@ -157,7 +164,7 @@ void *thread_tsk_c_medium(void *arg)
 	rt_printf("Medium finished\n");
 }
 
-void *thread_tsk_c_high(void *arg)
+void thread_tsk_c_high(void *arg)
 {
 	set_cpu(T_CPU(0));
 
@@ -169,14 +176,11 @@ void *thread_tsk_c_high(void *arg)
 	busy_wait_us(200000);
 	rt_printf("High releasing mutex\n");
 	rt_mutex_release(&mutex);
-
-	rt_task_sleep(1000000000);
-	main_wait = false;
 }
 
 /* Task D */
 
-void *thread_tsk_d_low(void *arg)
+void thread_tsk_d_low(void *arg)
 {
 	set_cpu(T_CPU(0));
 
@@ -196,7 +200,7 @@ void *thread_tsk_d_low(void *arg)
 	busy_wait_us(100000);
 }
 
-void *thread_tsk_d_high(void *arg)
+void thread_tsk_d_high(void *arg)
 {
 	set_cpu(T_CPU(0));
 
@@ -220,7 +224,7 @@ void *thread_tsk_d_high(void *arg)
 
 /* Task E */
 
-void *thread_tsk_e_low(void *arg)
+void thread_tsk_e_low(void *arg)
 {
 	set_cpu(T_CPU(0));
 
@@ -240,7 +244,7 @@ void *thread_tsk_e_low(void *arg)
 	busy_wait_us(100000);
 }
 
-void *thread_tsk_e_high(void *arg)
+void thread_tsk_e_high(void *arg)
 {
 	set_cpu(T_CPU(0));
 
@@ -268,48 +272,66 @@ int main()
 	rt_print_auto_init(1);
 
 	/* Task A */
-
-	rt_task_create(&rt_thread_1, "wait_thread_1", 0, 10, T_CPU(0));
-	rt_task_create(&rt_thread_2, "wait_thread_2", 0, 20, T_CPU(0));
-	rt_task_create(&rt_thread_3, "sync_thread", 0, 30, T_CPU(0));
-
-	rt_task_start(&rt_thread_1, &thread_tsk_a_wait, NULL);
-	rt_task_start(&rt_thread_2, &thread_tsk_a_wait, NULL);
-	rt_task_start(&rt_thread_3, &thread_tsk_a_sync, NULL);
+// 	rt_sem_create(&sem, "semaphore", 0, S_PRIO);
+// 
+// 	rt_task_create(&rt_thread_1, "wait_thread_1", 0, 10, T_CPU(0));
+// 	rt_task_create(&rt_thread_2, "wait_thread_2", 0, 20, T_CPU(0));
+// 	rt_task_create(&rt_thread_3, "sync_thread", 0, 30, T_CPU(0));
+// 
+// 	rt_task_start(&rt_thread_1, &thread_tsk_a_wait_1, NULL);
+// 	rt_task_start(&rt_thread_2, &thread_tsk_a_wait_2, NULL);
+// 	rt_task_start(&rt_thread_3, &thread_tsk_a_sync, NULL);
 
 	/* Task B */
-
-	// rt_task_create(&rt_thread_1, "thread_low", 0, 10, T_CPU(0));
-	// rt_task_create(&rt_thread_2, "thread_medium", 0, 20, T_CPU(0));
-	// rt_task_create(&rt_thread_3, "thread_high", 0, 30, T_CPU(0));
-
-	// rt_task_start(&rt_thread_1, &thread_tsk_b_low, NULL);
-	// rt_task_start(&rt_thread_2, &thread_tsk_b_medium, NULL);
-	// rt_task_start(&rt_thread_3, &thread_tsk_b_high, NULL);
+// 	rt_sem_create(&sem, "semaphore", 1, S_PRIO);
+// 
+// 	rt_task_create(&rt_thread_1, "thread_low", 0, 10, T_CPU(0));
+// 	rt_task_create(&rt_thread_2, "thread_medium", 0, 20, T_CPU(0));
+// 	rt_task_create(&rt_thread_3, "thread_high", 0, 30, T_CPU(0));
+// 
+// 	rt_task_start(&rt_thread_1, &thread_tsk_b_low, NULL);
+// 	rt_task_start(&rt_thread_2, &thread_tsk_b_medium, NULL);
+// 	rt_task_start(&rt_thread_3, &thread_tsk_b_high, NULL);
 
 	/* Task C */
-
-	// rt_task_create(&rt_thread_1, "thread_low", 0, 10, T_CPU(0));
-	// rt_task_create(&rt_thread_2, "thread_medium", 0, 20, T_CPU(0));
-	// rt_task_create(&rt_thread_3, "thread_high", 0, 30, T_CPU(0));
-
-	// rt_task_start(&rt_thread_1, &thread_tsk_c_low, NULL);
-	// rt_task_start(&rt_thread_2, &thread_tsk_c_medium, NULL);
-	// rt_task_start(&rt_thread_3, &thread_tsk_c_high, NULL);
+// 	rt_mutex_create(&mutex, "mutex");
+// 
+// 	rt_task_create(&rt_thread_1, "thread_low", 0, 10, T_CPU(0));
+// 	rt_task_create(&rt_thread_2, "thread_medium", 0, 20, T_CPU(0));
+// 	rt_task_create(&rt_thread_3, "thread_high", 0, 30, T_CPU(0));
+// 
+// 	rt_task_start(&rt_thread_1, &thread_tsk_c_low, NULL);
+// 	rt_task_start(&rt_thread_2, &thread_tsk_c_medium, NULL);
+// 	rt_task_start(&rt_thread_3, &thread_tsk_c_high, NULL);
 
 	/* Task D */
+	
+// 	rt_mutex_create(&mutex_a, "mutex_a");
+// 	rt_mutex_create(&mutex_b, "mutex_b");
+// 
+// 	rt_task_create(&rt_thread_1, "thread_low", 0, 10, T_CPU(0));
+// 	rt_task_create(&rt_thread_3, "thread_high", 0, 30, T_CPU(0));
+// 
+// 	rt_task_start(&rt_thread_1, &thread_tsk_d_low, NULL);
+// 	rt_task_start(&rt_thread_3, &thread_tsk_d_high, NULL);
+	
+	/* Task E */
+	
+	rt_mutex_create(&mutex_a, "mutex_a");
+	rt_mutex_create(&mutex_b, "mutex_b");
 
-	// rt_task_create(&rt_thread_1, "thread_low", 0, 10, T_CPU(0));
-	// rt_task_create(&rt_thread_3, "thread_high", 0, 30, T_CPU(0));
+	rt_task_create(&rt_thread_1, "thread_low", 0, 10, T_CPU(0));
+	rt_task_create(&rt_thread_3, "thread_high", 0, 30, T_CPU(0));
 
-	// rt_task_start(&rt_thread_1, &thread_tsk_d_low, NULL);
-	// rt_task_start(&rt_thread_3, &thread_tsk_d_high, NULL);
+	rt_task_start(&rt_thread_1, &thread_tsk_e_low, NULL);
+	rt_task_start(&rt_thread_3, &thread_tsk_e_high, NULL);
 
 	while (main_wait)
 	{
-		rt_printf("Deleting semaphore\n");
-		rt_sem_delete(&sem);
 	}
+	
+	rt_printf("Deleting semaphore\n");
+	rt_sem_delete(&sem);
 
 	return 0;
 }
